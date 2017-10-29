@@ -13,18 +13,31 @@ admin.initializeApp({
 
 const db = admin.database();
 
+function jsonData(resMsg, userId, valErrors, callback) {
+     var data = {
+        "resMsg" : resMsg,
+        "userId" :  userId,
+        "valErrors" : valErrors
+    };
+    callback(data);
+}
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.get('/user/:id', function (req, res) {
   const userId = req.params.id;
-  db.ref('users/'+userId).on("value", function(snapshot) {
-    console.log(snapshot.val());
-    res.send(snapshot);
-    // snapshot.forEach(function(data) {
-    //     console.log(data.key);
-    // });
-});
+  if (req.params.id ==null && req.params.id =="") {
+    jsonData("Please give user id for further process..", null, 500, function(result) {
+            console.log(result);
+            res.send(result);
+    });
+    } else {
+        db.ref('users/'+userId).on("value", function(snapshot) {
+            console.log(snapshot.val());
+            res.send(snapshot);
+        });   
+    }
 })
 
 app.post('/user', function (req, res) {
@@ -32,28 +45,23 @@ app.post('/user', function (req, res) {
 db.ref("users").orderByChild("email").equalTo(req.body.email).once("value",snapshot => {
     const userData = snapshot.val();
     if (userData){
-      var data = {
-                    "resMsg" : "User Already exits!.",
-                    "userId" : null,
-                    "valErrors" : 201
-                }
-     res.send(data);
+        jsonData("User Already exits!", null, 500, function(result) {
+            console.log(result);
+            res.send(result);
+        });
     } else {
-        db.ref(`users/`).push(req.body, error => {
+        db.ref('users/').push(req.body, error => {
             if (error) {
-            var data = {
-                    "resMsg" : "Something went wrong.TryAgin!.",
-                    "userId" : null,
-                    "valErrors" : "500"
-                }
-            // Log error to external service, e.g. Sentry
+            jsonData("Something went wrong.TryAgin!.", null, 500, function(result) {
+                    console.log(result);
+                    res.send(result);
+                });
             } else {
-                var data = {
-                    "resMsg" : "User created successfully.",
-                    "userId" :  db.ref('users').push().getKey(),
-                    "valErrors" : ""
-                }
-            res.send({data});
+            db.ref("users").orderByChild("email").equalTo(req.body.email).once("value", function(snapshot) {
+                    jsonData("User created successfully.",Object.keys(snapshot.val())[0], 500, function(result) {
+                    res.send(result);
+                });
+            });
             }
         });
     }
@@ -71,44 +79,46 @@ app.put('/user/:id', function (req, res) {
         "isActive": req.body.isActive,
     }, function(error) {
     if (error) {
-        var data = {
-            "resMsg" : "Oops!Something went wrong.Try Again.",
-            "userId" :  null,
-            "valErrors" : 500
-        }
-        res.send({data});
+        jsonData("Oops!Something went wrong.Try Again.", null, 500, function(result) {
+                    console.log(result);
+                    res.send(result);
+                });
     } else {
-        var data = {
-            "resMsg" : "User updated successfully.",
-            "userId" :  req.params.id,
-            "valErrors" : 200
-        }
-        res.send({data});
+        jsonData("User updated successfully.", req.params.id, 200, function(result) {
+            console.log(result);
+            res.send(result);
+        });
     }
     });
 })
 
 app.delete('/user/:id', function (req, res) {
- var hopperRef = db.ref("users/"+ req.params.id);
-        hopperRef.update({
-        "isActive": false,
-    }, function(error) {
-    if (error) {
-        var data = {
-            "resMsg" : "Oops!Something went wrong.Try Again.",
-            "userId" :  null,
-            "valErrors" : 500
-        }
-        res.send({data});
-    } else {
-        var data = {
-            "resMsg" : "User deleted successfully.",
-            "userId" :  req.params.id,
-            "valErrors" : 200
-        }
-        res.send({data});
+    if (req.params.id ==null && req.params.id =="") {
+            jsonData("Please user id for further process!.",  req.params.id, 500, 
+            function(result) {
+                    console.log(result);
+                    res.send(result);
+            });  
+        } else {
+        var hopperRef = db.ref("users/"+ req.params.id);
+            hopperRef.update({
+            "isActive": false,
+        }, function(error) {
+        if (error) {
+            jsonData("Oops something went wrong.TryAgain!.",  req.params.id, 500, 
+            function(result) {
+                    console.log(result);
+                    res.send(result);
+                });    
+            
+        } else {
+            jsonData("User deleted successfully.",  req.params.id, 200, 
+            function(result) {
+                    console.log(result);
+                    res.send(result);
+                });        }
+        });
     }
-    });
 })
  
 app.listen(3000)
