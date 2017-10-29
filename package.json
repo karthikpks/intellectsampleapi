@@ -1,0 +1,17 @@
+{
+  "name": "intellect-sample-api",
+  "version": "1.0.0",
+  "description": "Create sample user api for user management",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "karthik p",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "firebase": "^4.6.0",
+    "firebase-admin": "^5.4.3"
+  }
+}
